@@ -1,0 +1,614 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+\geometry{margin=2.5cm}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Programación Lineal --- AE1}
+\fancyhead[R]{\small Control Optimización}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\Large\bfseries}{Problema \thesection:}{0.5em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.5em}{}
+
+\begin{document}
+
+% ================================================================
+% PORTADA
+% ================================================================
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\LARGE\bfseries Universidad \par}
+\vspace{0.5cm}
+{\Large Facultad de Ingeniería \par}
+\vspace{2cm}
+{\Huge\bfseries Informe AE1 \par}
+\vspace{0.5cm}
+{\LARGE Programación Lineal Entera Mixta \par}
+\vspace{0.3cm}
+{\Large Control y Optimización \par}
+\vspace{3cm}
+{\Large\bfseries Estudiantes: Javier Farías, Uriel Navarrete, Fabiola Oses \par}
+\vspace{0.5cm}
+{\Large Profesor: Luis Fuentes \par}
+\vspace{2cm}
+{\large \today \par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ================================================================
+% PROBLEMA 1
+% ================================================================
+\section{La Química --- Minimización de Costo de Producción}
+
+\subsection{Enunciado}
+
+La Química fabrica tres productos químicos: A, B y C. Estos productos se obtienen por medio de 2 procesos de producción. El primer proceso durante 1 hora cuesta 40 USD y genera 3 unidades de A, una de B y una de C. Efectuar el segundo proceso durante 1 hora cuesta 10 USD, y se obtienen una unidad de A y una de B. Se deben producir diariamente al menos 40 unidades de A, 15 de B y 5 de C. Determinar un plan de producción que minimice el costo diario.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables de decisión:}
+\begin{itemize}[nosep]
+    \item $x_1$: horas del Proceso 1
+    \item $x_2$: horas del Proceso 2
+\end{itemize}
+
+\textbf{Función objetivo:}
+\[
+\min Z = 40x_1 + 10x_2
+\]
+
+\textbf{Restricciones:}
+\begin{align}
+3x_1 + x_2 &\geq 40 \quad \text{(demanda de A)} \\
+x_1 + x_2 &\geq 15 \quad \text{(demanda de B)} \\
+x_1 &\geq 5 \quad \text{(demanda de C)} \\
+x_1, x_2 &\geq 0
+\end{align}
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$x_1$ & 5.00 & Horas del Proceso 1 \\
+$x_2$ & 25.00 & Horas del Proceso 2 \\
+$Z^*$ & \$450.00 & Costo mínimo diario \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 1}
+\end{table}
+
+\textbf{Verificación de producción:}
+\begin{itemize}[nosep]
+    \item Producto A: $3(5) + 25 = 40$ unidades (cumple exactamente)
+    \item Producto B: $5 + 25 = 30$ unidades (excede en 15)
+    \item Producto C: $5$ unidades (cumple exactamente)
+\end{itemize}
+
+\subsection{Análisis de Sensibilidad}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Restricción} & \textbf{Precio Sombra} & \textbf{Holgura} & \textbf{Estado} \\
+\midrule
+Demanda A & 10.0000 & 0.00 & Activa \\
+Demanda B & 0.0000 & 15.00 & No activa \\
+Demanda C & 10.0000 & 0.00 & Activa \\
+\bottomrule
+\end{tabular}
+\caption{Análisis de sensibilidad del Problema 1}
+\end{table}
+
+Las restricciones de demanda de A y C son activas (binding). El precio sombra de 10 para Demanda A indica que si se requiriera una unidad adicional de A, el costo mínimo aumentaría en \$10. La demanda de B tiene holgura de 15 unidades, lo que significa que la producción supera con creces el mínimo requerido.
+
+\textit{Notebook de referencia: \texttt{problem\_1\_chemistry\_ampl.ipynb}}
+
+\newpage
+
+% ================================================================
+% PROBLEMA 2
+% ================================================================
+\section{Charcha --- Maximización de Utilidades Semanales}
+
+\subsection{Enunciado}
+
+Charcha compra materia prima ilimitada a \$6/lb. Cada libra puede convertirse en 2 oz del insumo 1 (2h, \$2) o 3 oz del insumo 2 (2h, \$4). Dispone de dos procesos productivos y puede fabricar los productos A (\$18/oz), B (\$24/oz), C (\$11/oz) y D (\$7/oz). Los desechos líquidos pueden descargarse al río (máx. 1\,000 oz/semana) o usarse para elaborar C y D. Se dispone de 6\,000 h/semana de tiempo de proceso.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables de decisión:}
+\begin{itemize}[nosep]
+    \item $mp_1, mp_2$: libras de materia prima para insumo 1 y 2
+    \item $p_1, p_2$: ejecuciones del proceso 1 y 2
+    \item $C, D$: onzas de productos C y D
+    \item $w$: onzas de desecho descargado al río
+\end{itemize}
+
+\textbf{Función objetivo:}
+\[
+\max Z = 17p_1 + 16p_2 + 7C + 2D - 8mp_1 - 10mp_2
+\]
+
+\textbf{Restricciones:}
+\begin{align}
+2mp_1 &\geq 2p_1 + p_2 + 2C \quad \text{(balance insumo 1)} \\
+3mp_2 &\geq p_1 + 2p_2 + 2D \quad \text{(balance insumo 2)} \\
+p_1 + 0.8p_2 &= w + 0.8C + 1.2D \quad \text{(balance desechos)} \\
+w &\leq 1000 \quad \text{(límite río)} \\
+p_1 &\leq 5000, \quad p_2 \leq 5000 \quad \text{(demanda)} \\
+2mp_1 + 2mp_2 + 2p_1 + 3p_2 + C + D &\leq 6000 \quad \text{(tiempo)}
+\end{align}
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$mp_1$ & 1\,356.44 & Libras para insumo 1 \\
+$mp_2$ & 386.14 & Libras para insumo 2 \\
+$p_1$ & 1\,158.42 & Oz de producto A \\
+$p_2$ & 0.00 & Oz de producto B \\
+$C$ & 198.02 & Oz de producto C \\
+$D$ & 0.00 & Oz de producto D \\
+$w$ & 1\,000.00 & Oz descargadas al río \\
+$Z^*$ & \$6\,366.34 & Utilidad máxima semanal \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 2}
+\end{table}
+
+\subsection{Análisis de Sensibilidad}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Restricción} & \textbf{Precio Sombra} & \textbf{Holgura} & \textbf{Estado} \\
+\midrule
+Balance Insumo 1 & $-4.5248$ & 0.00 & Activa \\
+Balance Insumo 2 & $-3.6832$ & 0.00 & Activa \\
+Balance Desechos & 3.2178 & 0.00 & Activa \\
+Límite Río & 3.2178 & 0.00 & Activa \\
+Demanda A & 0.0000 & 3\,841.58 & No activa \\
+Demanda B & 0.0000 & 5\,000.00 & No activa \\
+Tiempo Proceso & 0.5248 & 0.00 & Activa \\
+\bottomrule
+\end{tabular}
+\caption{Análisis de sensibilidad del Problema 2}
+\end{table}
+
+El tiempo de proceso y el límite del río son los cuellos de botella principales. El precio sombra en Tiempo Proceso (0.5248) indica que cada hora adicional de proceso incrementaría la utilidad en \$0.52. El límite del río (precio sombra 3.2178) muestra que poder descargar una onza más incrementaría la utilidad en \$3.22. Los productos B y D no se producen porque sus costos reducidos son negativos.
+
+\textit{Notebook de referencia: \texttt{problem\_2\_charcha\_ampl.ipynb}}
+
+\newpage
+
+% ================================================================
+% PROBLEMA 3
+% ================================================================
+\section{Refinería Melrose --- Maximización de Utilidades}
+
+\subsection{Enunciado}
+
+La refinería produce gasolina (\$8/barril, grado $\geq 9$, máx. 2\,000 barriles) y aceite combustible (\$6/barril, grado $\geq 7$, máx. 600 barriles) a partir de petróleo crudo procesado por tres métodos. Además, el desintegrador catalítico puede mejorar la calidad: grado 6$\to$8 por \$1.30 y grado 8$\to$10 por \$2.00. Excedentes se desechan a \$0.20/barril.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables de decisión:}
+\begin{itemize}[nosep]
+    \item $c_j$: barriles procesados por método $j$ ($j=1,2,3$)
+    \item $g_{i,p}$: barriles de grado $i$ destinados al producto $p$
+    \item $cr_{6\to8}, cr_{8\to10}$: barriles fraccionados
+    \item $d_i$: barriles de grado $i$ desechados
+\end{itemize}
+
+\textbf{Rendimiento por barril de crudo:}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Método} & \textbf{Grado 6} & \textbf{Grado 8} & \textbf{Grado 10} & \textbf{Costo} \\
+\midrule
+1 & 0.2 & 0.2 & 0.6 & \$3.40 \\
+2 & 0.3 & 0.3 & 0.4 & \$3.00 \\
+3 & 0.4 & 0.4 & 0.2 & \$2.60 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Función objetivo:}
+\[
+\max Z = 8 \cdot G_{total} + 6 \cdot F_{total} - \sum_{j} \text{costo}_j \cdot c_j - 1.30 \cdot cr_{6\to8} - 2 \cdot cr_{8\to10} - 0.20 \cdot D_{total}
+\]
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$c_1$ & 0.00 & Barriles por método 1 \\
+$c_2$ & 2\,400.00 & Barriles por método 2 \\
+$c_3$ & 200.00 & Barriles por método 3 \\
+Gasolina & 2\,000.00 & Barriles (grado prom. 9.00) \\
+Aceite & 600.00 & Barriles (grado prom. 7.00) \\
+$cr_{6\to8}$ & 500.00 & Barriles fraccionados \\
+Desechados & 0.00 & Barriles \\
+$Z^*$ & \$11\,230.00 & Utilidad máxima \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 3}
+\end{table}
+
+\subsection{Análisis de Sensibilidad}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Restricción} & \textbf{Precio Sombra} & \textbf{Holgura} & \textbf{Estado} \\
+\midrule
+Balance Grado 6 & $-1.5500$ & 0.00 & Activa \\
+Balance Grado 8 & $-2.8500$ & 0.00 & Activa \\
+Balance Grado 10 & $-4.2000$ & 0.00 & Activa \\
+Calidad Gasolina & $-0.6750$ & 0.00 & Activa \\
+Calidad Aceite & $-0.6500$ & 0.00 & Activa \\
+Límite Gasolina & 4.4750 & 0.00 & Activa \\
+Límite Aceite & 3.8000 & 0.00 & Activa \\
+\bottomrule
+\end{tabular}
+\caption{Análisis de sensibilidad del Problema 3}
+\end{table}
+
+Todas las restricciones están activas. El precio sombra del límite de gasolina (\$4.48) indica que cada barril adicional que se pudiera vender generaría \$4.48 de utilidad marginal. El fraccionamiento de grado 6$\to$8 resulta económicamente conveniente (se utiliza), mientras que el fraccionamiento 8$\to$10 no se usa.
+
+\textit{Notebook de referencia: \texttt{problem\_3\_refinery\_ampl.ipynb}}
+
+\newpage
+
+% ================================================================
+% PROBLEMA 4
+% ================================================================
+\section{Donovan Enterprises --- Minimización de Costos de Producción}
+
+\subsection{Enunciado}
+
+Donovan fabrica licuadoras con demanda trimestral de 4\,000, 2\,000, 3\,000 y 10\,000 unidades. Cada empleado trabaja 3 de 4 trimestres, gana \$30\,000/año y produce hasta 500 licuadoras/trimestre. El costo de inventario es \$30/unidad/trimestre. Inventario inicial: 600 unidades.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables de decisión:}
+\begin{itemize}[nosep]
+    \item $e_s$: empleados en horario $s$ ($s = A,B,C,D$)
+    \item $p_t$: producción en trimestre $t$
+    \item $I_t$: inventario al final del trimestre $t$
+\end{itemize}
+
+\textbf{Horarios de trabajo:}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Horario} & \textbf{Q1} & \textbf{Q2} & \textbf{Q3} & \textbf{Q4} \\
+\midrule
+A (libre Q4) & \checkmark & \checkmark & \checkmark & -- \\
+B (libre Q3) & \checkmark & \checkmark & -- & \checkmark \\
+C (libre Q2) & \checkmark & -- & \checkmark & \checkmark \\
+D (libre Q1) & -- & \checkmark & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Función objetivo:}
+\[
+\min Z = 30000 \sum_{s} e_s + 30 \sum_{t} I_t
+\]
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$e_A$ & 0.00 & Empleados horario A \\
+$e_B$ & 0.00 & Empleados horario B \\
+$e_C$ & 6.80 & Empleados horario C \\
+$e_D$ & 6.20 & Empleados horario D \\
+Total empleados & 13.00 & \\
+$Z^*$ & \$495\,000.00 & Costo mínimo anual \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 4}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Trimestre} & \textbf{Demanda} & \textbf{Producción} & \textbf{Inventario} & \textbf{Trabajadores} \\
+\midrule
+Q1 & 4\,000 & 3\,400 & 0 & 6.8 \\
+Q2 & 2\,000 & 2\,000 & 0 & 6.2 \\
+Q3 & 3\,000 & 6\,500 & 3\,500 & 13.0 \\
+Q4 & 10\,000 & 6\,500 & 0 & 13.0 \\
+\bottomrule
+\end{tabular}
+\caption{Producción e inventario por trimestre}
+\end{table}
+
+\subsection{Análisis de Sensibilidad}
+
+El precio sombra en la capacidad de producción de Q4 ($-45.00$) indica que este es el trimestre más restrictivo. La estrategia óptima acumula inventario en Q3 (3\,500 unidades) para enfrentar la alta demanda de Q4. En Q2 existe capacidad ociosa (1\,100 unidades de holgura). Los costos de mano de obra (\$390\,000) dominan sobre los costos de inventario (\$105\,000).
+
+\textit{Notebook de referencia: \texttt{problem\_4\_donovan\_ampl.ipynb}}
+
+\newpage
+
+% ================================================================
+% PROBLEMA 5
+% ================================================================
+\section{Encuesta Telefónica --- Minimización de Costos}
+
+\subsection{Enunciado}
+
+Se requiere contactar al menos 150 esposas, 120 esposos, 100 varones solteros y 110 mujeres solteras. Las llamadas diurnas cuestan \$2 y las nocturnas \$5. Máximo la mitad de las llamadas pueden ser nocturnas.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables:} $d$ = llamadas diurnas, $n$ = llamadas nocturnas.
+
+\textbf{Probabilidades de contacto:}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Persona} & \textbf{Día (\%)} & \textbf{Noche (\%)} \\
+\midrule
+Esposa & 30 & 30 \\
+Esposo & 10 & 30 \\
+Varón soltero & 10 & 15 \\
+Mujer soltera & 10 & 20 \\
+Nadie & 40 & 5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Función objetivo:} $\min Z = 2d + 5n$
+
+\textbf{Restricciones:}
+\begin{align}
+0.30d + 0.30n &\geq 150 \quad \text{(esposas)} \\
+0.10d + 0.30n &\geq 120 \quad \text{(esposos)} \\
+0.10d + 0.15n &\geq 100 \quad \text{(varones solteros)} \\
+0.10d + 0.20n &\geq 110 \quad \text{(mujeres solteras)} \\
+n &\leq d \quad \text{(máx. 50\% nocturnas)}
+\end{align}
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$d$ & 900 & Llamadas diurnas \\
+$n$ & 100 & Llamadas nocturnas \\
+Total & 1\,000 & Llamadas totales \\
+$Z^*$ & \$2\,300 & Costo mínimo \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 5}
+\end{table}
+
+\subsection{Análisis de Sensibilidad}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Restricción} & \textbf{Precio Sombra} & \textbf{Holgura} & \textbf{Estado} \\
+\midrule
+Esposas & 0.00 & 150.00 & No activa \\
+Esposos & 10.00 & 0.00 & Activa \\
+Varones solteros & 0.00 & 5.00 & No activa \\
+Mujeres solteras & 10.00 & 0.00 & Activa \\
+Límite nocturno & 0.00 & 800.00 & No activa \\
+\bottomrule
+\end{tabular}
+\caption{Análisis de sensibilidad del Problema 5}
+\end{table}
+
+Los esposos y mujeres solteras son los grupos más difíciles de alcanzar, con un costo marginal de \$10 por persona adicional. Las esposas se contactan en exceso (150 de más) debido a las altas tasas de contacto. La restricción del 50\% de llamadas nocturnas no es activa (solo 10\% son nocturnas).
+
+\textit{Notebook de referencia: \texttt{problem\_5\_survey\_ampl.ipynb}}
+
+\newpage
+
+% ================================================================
+% PROBLEMA 6
+% ================================================================
+\section{Brady Corporation --- Minimización de Costos de Madera}
+
+\subsection{Enunciado}
+
+Brady necesita 90\,000 pies cúbicos de tablones procesados semanalmente. Puede comprar tablones Grado 1 (\$3/cuft, rinde 0.7) o Grado 2 (\$7/cuft, rinde 0.9), o procesar troncos propios (\$3 corte + \$2.50 aserradero, rinde 0.8). Todo requiere secado a \$4/cuft. Restricciones: aserradero 35\,000 cuft, Grado 1 máx. 40\,000, Grado 2 máx. 60\,000, tiempo de secado 40 h.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables:}
+\begin{itemize}[nosep]
+    \item $g_1$: pies cúbicos de Grado 1
+    \item $g_2$: pies cúbicos de Grado 2
+    \item $L$: pies cúbicos de troncos
+\end{itemize}
+
+\textbf{Función objetivo:} $\min Z = 7g_1 + 11g_2 + 9.50L$
+
+\textbf{Restricciones:}
+\begin{align}
+0.7g_1 + 0.9g_2 + 0.8L &\geq 90\,000 \quad \text{(demanda)} \\
+L &\leq 35\,000 \quad \text{(aserradero)} \\
+g_1 &\leq 40\,000 \quad \text{(oferta Grado 1)} \\
+g_2 &\leq 60\,000 \quad \text{(oferta Grado 2)} \\
+1.2g_1 + 0.8g_2 + 1.3L &\leq 144\,000 \quad \text{(tiempo secado)}
+\end{align}
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$g_1$ & 40\,000.00 & Pies cúbicos Grado 1 \\
+$g_2$ & 37\,777.78 & Pies cúbicos Grado 2 \\
+$L$ & 35\,000.00 & Pies cúbicos de troncos \\
+$Z^*$ & \$1\,028\,055.56 & Costo mínimo semanal \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 6}
+\end{table}
+
+\subsection{Análisis de Sensibilidad}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Restricción} & \textbf{Precio Sombra} & \textbf{Holgura} & \textbf{Estado} \\
+\midrule
+Demanda & 12.2222 & 0.00 & Activa \\
+Aserradero & $-0.2778$ & 0.00 & Activa \\
+Oferta Grado 1 & $-1.5556$ & 0.00 & Activa \\
+Oferta Grado 2 & 0.0000 & 22\,222.22 & No activa \\
+Tiempo secado & 0.0000 & 20\,277.78 & No activa \\
+\bottomrule
+\end{tabular}
+\caption{Análisis de sensibilidad del Problema 6}
+\end{table}
+
+El costo marginal de un pie cúbico útil adicional es \$12.22. La oferta de Grado 1 es la restricción más valiosa (precio sombra $-1.56$): conseguir acceso a más Grado 1 reduciría el costo total, ya que es la fuente más económica (\$10/cuft útil vs \$12.22/cuft para Grado 2). El tiempo de secado tiene holgura significativa y no es cuello de botella.
+
+\textit{Notebook de referencia: \texttt{problem\_6\_brady\_ampl.ipynb}}
+
+\newpage
+
+% ================================================================
+% PROBLEMA 7
+% ================================================================
+\section{Centro de Reciclaje --- Mezcla Óptima de Aleación}
+
+\subsection{Enunciado}
+
+Un centro de reciclaje usa dos chatarras de aluminio (A a \$100/ton, B a \$80/ton) para producir 1\,000 toneladas de aleación especial. Las especificaciones requieren: aluminio 3--6\%, silicio 3--5\%, carbón 3--7\%.
+
+\subsection{Formulación Matemática}
+
+\textbf{Variables:} $x_A$ = toneladas de chatarra A, $x_B$ = toneladas de chatarra B.
+
+\textbf{Composición de las chatarras:}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Elemento} & \textbf{Chatarra A} & \textbf{Chatarra B} \\
+\midrule
+Aluminio & 6\% & 3\% \\
+Silicio & 3\% & 6\% \\
+Carbón & 4\% & 3\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Función objetivo:} $\min Z = 100x_A + 80x_B$
+
+\textbf{Restricciones:}
+\begin{align}
+x_A + x_B &= 1000 \\
+30 \leq 0.06x_A + 0.03x_B &\leq 60 \quad \text{(aluminio)} \\
+30 \leq 0.03x_A + 0.06x_B &\leq 50 \quad \text{(silicio)} \\
+30 \leq 0.04x_A + 0.03x_B &\leq 70 \quad \text{(carbón)}
+\end{align}
+
+\subsection{Solución Óptima}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrl}
+\toprule
+\textbf{Variable} & \textbf{Valor} & \textbf{Descripción} \\
+\midrule
+$x_A$ & 333.33 & Toneladas de chatarra A \\
+$x_B$ & 666.67 & Toneladas de chatarra B \\
+$Z^*$ & \$86\,666.67 & Costo mínimo \\
+\bottomrule
+\end{tabular}
+\caption{Solución óptima del Problema 7}
+\end{table}
+
+\textbf{Composición de la aleación resultante:}
+\begin{itemize}[nosep]
+    \item Aluminio: 40.00 ton (4.00\%) --- dentro del rango [3\%, 6\%] \checkmark
+    \item Silicio: 50.00 ton (5.00\%) --- en el límite superior [3\%, 5\%] \checkmark
+    \item Carbón: 33.33 ton (3.33\%) --- dentro del rango [3\%, 7\%] \checkmark
+\end{itemize}
+
+\subsection{Análisis de Sensibilidad}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Restricción} & \textbf{Precio Sombra} & \textbf{Holgura} & \textbf{Estado} \\
+\midrule
+Producción Total & 120.0000 & 0.00 & Activa \\
+Aluminio mín. & 0.0000 & 10.00 & No activa \\
+Aluminio máx. & 0.0000 & 20.00 & No activa \\
+Silicio mín. & 0.0000 & 20.00 & No activa \\
+Silicio máx. & $-666.6667$ & 0.00 & Activa \\
+Carbón mín. & 0.0000 & 3.33 & No activa \\
+Carbón máx. & 0.0000 & 36.67 & No activa \\
+\bottomrule
+\end{tabular}
+\caption{Análisis de sensibilidad del Problema 7}
+\end{table}
+
+La restricción de silicio máximo (5\%) es la restricción activa más crítica con un precio sombra de $-666.67$. Esto significa que si se relajara el límite superior de silicio en 1 tonelada, el costo se reduciría en \$666.67. La solución utiliza más chatarra B (más barata) pero está limitada por el alto contenido de silicio de B (6\%). El costo marginal por tonelada de aleación es \$120 (precio sombra de producción total).
+
+\textit{Notebook de referencia: \texttt{problem\_7\_recycling\_ampl.ipynb}}
+
+\end{document}
